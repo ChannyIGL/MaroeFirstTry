@@ -1,10 +1,25 @@
 import React, { useState } from 'react';
 import { StyleSheet, Text, View, TextInput, TouchableOpacity, Image } from 'react-native';
-import { Link } from 'expo-router';
+import { Link, router } from 'expo-router';
+import { signInWithEmailAndPassword } from 'firebase/auth';
+import { auth } from '../../firebase';
 
 const LoginScreen = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [error, setError] = useState('');
+
+  // Handle login
+  const handleLogin = async () => {
+    setError('');
+
+    try {
+      await signInWithEmailAndPassword(auth, email, password);
+      router.replace('/(home)'); // redirect to home screen
+    } catch (err) {
+      setError('Invalid email or password');
+    }
+  };
 
   return (
     <View style={styles.container}>
@@ -19,6 +34,9 @@ const LoginScreen = () => {
       </View>
 
       <Text style={styles.subtitle}>Sign in to your account</Text>
+
+      {/* Error message */}
+      {error ? <Text style={styles.errorText}>{error}</Text> : null}
 
       {/* Email input */}
       <TextInput
@@ -45,7 +63,7 @@ const LoginScreen = () => {
       </TouchableOpacity>
 
       {/* Login button */}
-      <TouchableOpacity style={styles.loginButton}>
+      <TouchableOpacity style={styles.loginButton} onPress={handleLogin}>
         <Text style={styles.loginButtonText}>Login</Text>
       </TouchableOpacity>
 
@@ -86,6 +104,10 @@ const styles = StyleSheet.create({
   subtitle: {
     fontSize: 16,
     marginBottom: 30,
+  },
+  errorText: {
+    color: 'red',
+    marginBottom: 10,
   },
   input: {
     width: '100%',
