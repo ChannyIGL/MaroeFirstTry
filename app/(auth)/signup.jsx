@@ -1,14 +1,34 @@
 import React, { useState } from 'react';
 import { StyleSheet, Text, View, TextInput, TouchableOpacity, Image } from 'react-native';
 import { Link } from 'expo-router';
+import { createUserWithEmailAndPassword } from 'firebase/auth';
+import { auth } from '../../firebase';
 
 const SignupScreen = () => {
   const [name, setName] = useState('');
-  const [phone, setPhone] = useState('');
-  const [address, setAddress] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+  const [error, setError] = useState('');
+  const [success, setSuccess] = useState(false);
+
+  // Handle signup
+  const handleSignup = async () => {
+    setError('');
+    setSuccess(false);
+
+    if (password !== confirmPassword) {
+      setError('Passwords do not match');
+      return;
+    }
+
+    try {
+      await createUserWithEmailAndPassword(auth, email, password);
+      setSuccess(true);
+    } catch (err) {
+      setError(err.message);
+    }
+  };
 
   return (
     <View style={styles.container}>
@@ -24,71 +44,76 @@ const SignupScreen = () => {
 
       <Text style={styles.subtitle}>Create your account</Text>
 
-      {/* Name input */}
-      <TextInput
-        placeholder="Full Name"
-        value={name}
-        onChangeText={setName}
-        style={styles.input}
-      />
+      {/* Success message */}
+      {success && (
+        <>
+          <Text style={styles.successText}>Account created! Please log in below.</Text>
+          <Link href="/(auth)/login" asChild>
+            <TouchableOpacity style={styles.signupButton}>
+              <Text style={styles.signupButtonText}>Go to Login</Text>
+            </TouchableOpacity>
+          </Link>
+        </>
+      )}
 
-      {/* Phone input */}
-      <TextInput
-        placeholder="Phone Number"
-        value={phone}
-        onChangeText={setPhone}
-        style={styles.input}
-        keyboardType="phone-pad"
-      />
+      {/* Error message */}
+      {error ? <Text style={styles.errorText}>{error}</Text> : null}
 
-      {/* Address input */}
-      <TextInput
-        placeholder="Address"
-        value={address}
-        onChangeText={setAddress}
-        style={styles.input}
-      />
+      {/* Only show form if not successful */}
+      {!success && (
+        <>
+          {/* Name input */}
+          <TextInput
+            placeholder="Full Name"
+            value={name}
+            onChangeText={setName}
+            style={styles.input}
+          />
 
-      {/* Email input */}
-      <TextInput
-        placeholder="E-mail"
-        value={email}
-        onChangeText={setEmail}
-        style={styles.input}
-        keyboardType="email-address"
-        autoCapitalize="none"
-      />
+          {/* Email input */}
+          <TextInput
+            placeholder="E-mail"
+            value={email}
+            onChangeText={setEmail}
+            style={styles.input}
+            keyboardType="email-address"
+            autoCapitalize="none"
+          />
 
-      {/* Password input */}
-      <TextInput
-        placeholder="Password"
-        value={password}
-        onChangeText={setPassword}
-        style={styles.input}
-        secureTextEntry
-      />
+          {/* Password input */}
+          <TextInput
+            placeholder="Password"
+            value={password}
+            onChangeText={setPassword}
+            style={styles.input}
+            secureTextEntry
+          />
 
-      {/* Confirm password input */}
-      <TextInput
-        placeholder="Confirm Password"
-        value={confirmPassword}
-        onChangeText={setConfirmPassword}
-        style={styles.input}
-        secureTextEntry
-      />
+          {/* Confirm password input */}
+          <TextInput
+            placeholder="Confirm Password"
+            value={confirmPassword}
+            onChangeText={setConfirmPassword}
+            style={styles.input}
+            secureTextEntry
+          />
 
-      {/* Signup button */}
-      <TouchableOpacity style={styles.signupButton}>
-        <Text style={styles.signupButtonText}>Sign Up</Text>
-      </TouchableOpacity>
+          {/* Signup button */}
+          <TouchableOpacity style={styles.signupButton} onPress={handleSignup}>
+            <Text style={styles.signupButtonText}>Sign Up</Text>
+          </TouchableOpacity>
+        </>
+      )}
 
-      {/* Login link */}
-      <Text style={styles.loginText}>
-        Already have an account?{' '}
-        <Link href="/(auth)/login" style={styles.loginLink}>
-          Login
-        </Link>
-      </Text>
+      {/* Login link (hidden after success) */}
+      {!success && (
+        <Text style={styles.loginText}>
+          Already have an account?{' '}
+          <Link href="/(auth)/login" style={styles.loginLink}>
+            Login
+          </Link>
+        </Text>
+      )}
     </View>
   );
 };
@@ -118,7 +143,16 @@ const styles = StyleSheet.create({
   },
   subtitle: {
     fontSize: 16,
-    marginBottom: 30,
+    marginBottom: 20,
+  },
+  successText: {
+    color: 'green',
+    fontWeight: 'bold',
+    marginBottom: 20,
+  },
+  errorText: {
+    color: 'red',
+    marginBottom: 10,
   },
   input: {
     width: '100%',
