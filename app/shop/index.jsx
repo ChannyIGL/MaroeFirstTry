@@ -87,7 +87,7 @@ export default function ShopPage() {
       {/* Bottom Nav */}
       <View style={styles.tabBar}>
         <NavIcon href="/(home)" icon={homeIcon} label="Home" />
-        <NavIcon href="/(shop)" icon={shopIcon} label="Shop" />
+        <NavIcon href="/shop" icon={shopIcon} label="Shop" />
         <NavIcon href="/(wishlist)" icon={wishlistIcon} label="Wishlist" />
         <NavIcon href="/(profile)" icon={profileIcon} label="Profile" />
       </View>

@@ -108,19 +108,25 @@ export default function HomeScreen() {
               horizontal
               pagingEnabled
               showsHorizontalScrollIndicator={false}
+              getItemLayout={(data, index) => ({
+                length: SCREEN_WIDTH,
+                offset: SCREEN_WIDTH * index,
+                index,
+              })}
+              onScrollToIndexFailed={(info) => {
+                console.warn('Scroll to index failed:', info);
+              }}
               onMomentumScrollEnd={e => {
                 const index = Math.round(e.nativeEvent.contentOffset.x / SCREEN_WIDTH);
                 setSlideIndex(index);
               }}
               renderItem={({ item }) => (
-                <View style={styles.trendingItem}>
-                  <Link href={`/shop/${item.id}`} asChild>
-                    <TouchableOpacity>
-                      <Image source={{ uri: item.imageUrl }} style={styles.trendingImage} />
-                      <Text style={styles.trendingName}>{item.name}</Text>
-                    </TouchableOpacity>
-                  </Link>
-                </View>
+                <Link href={`/shop/${item.id}`} asChild>
+                  <TouchableOpacity style={styles.trendingItem}>
+                    <Image source={{ uri: item.imageUrl }} style={styles.trendingImage} />
+                    <Text style={styles.trendingName}>{item.name}</Text>
+                  </TouchableOpacity>
+                </Link>
               )}
             />
           ) : (
@@ -183,7 +189,7 @@ export default function HomeScreen() {
       {/* Bottom nav */}
       <View style={styles.tabBar}>
         <NavIcon href="/(home)" icon={homeIcon} label="Home" />
-        <NavIcon href="/(shop)" icon={shopIcon} label="Shop" />
+        <NavIcon href="/shop" icon={shopIcon} label="Shop" />
         <NavIcon href="/(wishlist)" icon={wishlistIcon} label="Wishlist" />
         <NavIcon href="/(profile)" icon={profileIcon} label="Profile" />
       </View>

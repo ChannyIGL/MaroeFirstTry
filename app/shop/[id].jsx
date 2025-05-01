@@ -1,8 +1,8 @@
-import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, Image, TouchableOpacity, Dimensions, SafeAreaView, ScrollView, ActivityIndicator } from 'react-native';
+import React, { useEffect, useState, useRef } from 'react';
+import { View, Text, StyleSheet, Image, TouchableOpacity, Dimensions, SafeAreaView, ScrollView, ActivityIndicator, Animated } from 'react-native';
 import { useLocalSearchParams, Link } from 'expo-router';
-import { doc, getDoc } from 'firebase/firestore';
-import { db } from '../../firebase';
+import { doc, getDoc, setDoc } from 'firebase/firestore';
+import { auth, db } from '../../firebase';
 import homeIcon from '../../assets/home.png';
 import shopIcon from '../../assets/shop.png';
 import wishlistIcon from '../../assets/wishlist.png';
@@ -11,11 +11,21 @@ import profileIcon from '../../assets/profile.png';
 const SCREEN_WIDTH = Dimensions.get('window').width;
 
 export default function ProductDetailPage() {
+  // Get product ID from URL route
   const { id } = useLocalSearchParams();
+
+  // State for product data and selected size
   const [product, setProduct] = useState(null);
   const [selectedSize, setSelectedSize] = useState(null);
-  const [loading, setLoading] = useState(true);
 
+  // State for loading and user feedback message
+  const [loading, setLoading] = useState(true);
+  const [feedback, setFeedback] = useState('');
+
+  // Animation for wishlist icon
+  const scaleAnim = useRef(new Animated.Value(1)).current;
+
+  // Fetch product data from Firestore
   useEffect(() => {
     const fetchProduct = async () => {
       try {
@@ -34,6 +44,56 @@ export default function ProductDetailPage() {
     fetchProduct();
   }, [id]);
 
+  // Trigger bounce animation on wishlist icon
+  const triggerPulse = () => {
+    Animated.sequence([
+      Animated.timing(scaleAnim, {
+        toValue: 1.4,
+        duration: 120,
+        useNativeDriver: true,
+      }),
+      Animated.spring(scaleAnim, {
+        toValue: 1,
+        friction: 3,
+        useNativeDriver: true,
+      }),
+    ]).start();
+  };
+
+  // Add product to wishlist collection in Firestore
+  const handleAddToWishlist = async () => {
+    if (!selectedSize) {
+      setFeedback('Please select a size first.');
+      return;
+    }
+
+    try {
+      const userId = auth.currentUser?.uid;
+      if (!userId) {
+        setFeedback('You must be logged in to use wishlist.');
+        return;
+      }
+
+      // Add or update product in user's wishlist
+      const wishlistRef = doc(db, 'wishlists', userId, 'items', id);
+      await setDoc(wishlistRef, {
+        productId: id,
+        size: selectedSize,
+        addedAt: new Date(),
+        name: product.name,
+        imageUrl: product.imageUrl,
+        price: product.price,
+      });
+
+      triggerPulse(); // Animate icon
+      setFeedback('Added to wishlist!');
+    } catch (error) {
+      console.error('Error adding to wishlist:', error);
+      setFeedback('Error adding to wishlist.');
+    }
+  };
+
+  // Show loading indicator while fetching data
   if (loading || !product) {
     return (
       <SafeAreaView style={styles.centered}>
@@ -46,7 +106,7 @@ export default function ProductDetailPage() {
     <SafeAreaView style={styles.container}>
       {/* Top icons */}
       <View style={styles.topIconsRow}>
-        <Link href="/(shop)" asChild>
+        <Link href="/shop" asChild>
           <TouchableOpacity>
             <Text style={styles.backButton}>←</Text>
           </TouchableOpacity>
@@ -74,8 +134,11 @@ export default function ProductDetailPage() {
         <View style={styles.content}>
           <View style={styles.row}>
             <Text style={styles.title}>{product.name}</Text>
-            <TouchableOpacity>
-              <Image source={require('../../assets/wishlist.png')} style={styles.wishlistIcon} />
+            <TouchableOpacity onPress={handleAddToWishlist}>
+              <Animated.Image
+                source={require('../../assets/wishlist.png')}
+                style={[styles.wishlistIcon, { transform: [{ scale: scaleAnim }] }]}
+              />
             </TouchableOpacity>
           </View>
 
@@ -92,10 +155,27 @@ export default function ProductDetailPage() {
                 ]}
                 onPress={() => setSelectedSize(size)}
               >
-                <Text style={styles.sizeText}>{size}</Text>
+                <Text style={[styles.sizeText, selectedSize === size && styles.selectedSizeText]}>
+                  {size}
+                </Text>
               </TouchableOpacity>
             ))}
           </View>
+
+          {/* Feedback Message */}
+          {feedback ? (
+            <Text
+              style={{
+                fontSize: 14,
+                fontWeight: '600',
+                color: feedback.includes('Added') ? 'green' : 'red',
+                marginBottom: 14,
+                marginTop: -8,
+              }}
+            >
+              {feedback}
+            </Text>
+          ) : null}
 
           {/* Add to Cart */}
           <TouchableOpacity style={styles.cartButton}>
@@ -120,7 +200,7 @@ export default function ProductDetailPage() {
       {/* Bottom nav */}
       <View style={styles.tabBar}>
         <NavIcon href="/(home)" icon={homeIcon} label="Home" />
-        <NavIcon href="/(shop)" icon={shopIcon} label="Shop" />
+        <NavIcon href="/shop" icon={shopIcon} label="Shop" />
         <NavIcon href="/(wishlist)" icon={wishlistIcon} label="Wishlist" />
         <NavIcon href="/(profile)" icon={profileIcon} label="Profile" />
       </View>
@@ -152,11 +232,7 @@ const styles = StyleSheet.create({
   },
   backButton: { fontSize: 28, fontWeight: 'bold' },
   cartIcon: { width: 28, height: 28 },
-  logoContainer: {   
-    alignItems: 'center',
-    marginBottom: 10,
-    marginTop: -10,
-  },
+  logoContainer: { alignItems: 'center', marginBottom: 10, marginTop: -10 },
   fullLogo: { width: 240, height: 60 },
   productImage: {
     width: SCREEN_WIDTH * 0.9,
@@ -197,6 +273,9 @@ const styles = StyleSheet.create({
   sizeText: {
     color: '#000',
     fontWeight: '600',
+  },
+  selectedSizeText: {
+    color: '#fff',
   },
   cartButton: {
     backgroundColor: '#000',
