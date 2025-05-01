@@ -31,16 +31,16 @@ export default function ShopPage() {
   }, []);
 
   const renderItem = ({ item }) => (
-    <View style={styles.card}>
-      <Image source={{ uri: item.imageUrl }} style={styles.cardImage} />
-      <Text style={styles.cardTitle} numberOfLines={1} ellipsizeMode="tail">
-        {item.name}
-      </Text>
-      <Text style={styles.cardPrice}>Rp {item.price.toLocaleString()}</Text>
-      <Text style={styles.cardSizes}>Sizes: {item.sizes?.join(' / ')}</Text>
-    </View>
+    <Link href={`/shop/${item.id}`} asChild>
+      <TouchableOpacity style={styles.card}>
+        <Image source={{ uri: item.imageUrl }} style={styles.cardImage} />
+        <Text style={styles.cardTitle} numberOfLines={1} ellipsizeMode="tail">{item.name}</Text>
+        <Text style={styles.cardPrice}>Rp {item.price.toLocaleString()}</Text>
+        <Text style={styles.cardSizes}>Sizes: {item.sizes?.join(' / ')}</Text>
+      </TouchableOpacity>
+    </Link>
   );
-
+  
   return (
     <SafeAreaView style={styles.container}>
       {/* Top icons */}

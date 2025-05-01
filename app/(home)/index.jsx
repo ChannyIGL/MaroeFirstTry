@@ -114,8 +114,12 @@ export default function HomeScreen() {
               }}
               renderItem={({ item }) => (
                 <View style={styles.trendingItem}>
-                  <Image source={{ uri: item.imageUrl }} style={styles.trendingImage} />
-                  <Text style={styles.trendingName}>{item.name}</Text>
+                  <Link href={`/shop/${item.id}`} asChild>
+                    <TouchableOpacity>
+                      <Image source={{ uri: item.imageUrl }} style={styles.trendingImage} />
+                      <Text style={styles.trendingName}>{item.name}</Text>
+                    </TouchableOpacity>
+                  </Link>
                 </View>
               )}
             />
@@ -139,12 +143,16 @@ export default function HomeScreen() {
           ) : (
             newArrivals.map(product => (
               <View style={styles.newArrivalItemWrapper} key={product.id}>
-                <Image source={{ uri: product.imageUrl }} style={styles.newArrivalItem} />
-                <View style={styles.textLeft}>
-                  <Text style={styles.dressName}>{product.name}</Text>
-                  <Text style={styles.dressPrice}>Rp {product.price.toLocaleString()}</Text>
-                  <Text style={styles.dressSizes}>Sizes: {product.sizes.join(' / ')}</Text>
-                </View>
+                <Link href={`/shop/${product.id}`} asChild>
+                  <TouchableOpacity>
+                    <Image source={{ uri: product.imageUrl }} style={styles.newArrivalItem} />
+                    <View style={styles.textLeft}>
+                      <Text style={styles.dressName}>{product.name}</Text>
+                      <Text style={styles.dressPrice}>Rp {product.price.toLocaleString()}</Text>
+                      <Text style={styles.dressSizes}>Sizes: {product.sizes.join(' / ')}</Text>
+                    </View>
+                  </TouchableOpacity>
+                </Link>
               </View>
             ))
           )}
