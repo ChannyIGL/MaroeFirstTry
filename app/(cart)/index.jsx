@@ -112,9 +112,11 @@ export default function CartPage() {
       <View style={styles.totalFooter}>
         <Text style={styles.totalLabel}>Estimated Total</Text>
         <Text style={styles.totalValue}>Rp {total.toLocaleString()}</Text>
-        <TouchableOpacity style={styles.checkoutButton}>
-          <Text style={styles.checkoutText}>Proceed to Pickup</Text>
-        </TouchableOpacity>
+        <Link href="/(checkout)" asChild>
+          <TouchableOpacity style={styles.checkoutButton}>
+            <Text style={styles.checkoutText}>Proceed to Pickup</Text>
+          </TouchableOpacity>
+        </Link>
       </View>
 
       {/* Bottom nav */}

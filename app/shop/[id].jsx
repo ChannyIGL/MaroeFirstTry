@@ -108,6 +108,7 @@ export default function ProductDetailPage() {
           size: selectedSize,
           price: product.price,
           quantity: 1,
+          locations: product.locations
         });
       }
 
