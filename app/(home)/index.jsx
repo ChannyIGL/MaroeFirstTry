@@ -1,14 +1,57 @@
-import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, Image, TextInput, TouchableOpacity, ScrollView, SafeAreaView } from 'react-native';
+import React, { useEffect, useState, useRef } from 'react';
+import {View, Text, StyleSheet, Image,TextInput, TouchableOpacity, ScrollView, FlatList, Dimensions, SafeAreaView, ActivityIndicator} from 'react-native';
 import { Link } from 'expo-router';
+import { collection, getDocs, query, orderBy, limit } from 'firebase/firestore';
+import { db } from '../../firebase';
 import homeIcon from '../../assets/home.png';
 import shopIcon from '../../assets/shop.png';
 import wishlistIcon from '../../assets/wishlist.png';
 import profileIcon from '../../assets/profile.png';
 
+const { width: SCREEN_WIDTH } = Dimensions.get('window');
+
 export default function HomeScreen() {
+  const [products, setProducts] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [slideIndex, setSlideIndex] = useState(0);
+  const trendingRef = useRef(null);
+
   const [timeLeft, setTimeLeft] = useState({ days: 0, hours: 0, minutes: 0, seconds: 0 });
   const launchDate = new Date('2025-05-22T00:00:00');
+
+  useEffect(() => {
+    const fetchProducts = async () => {
+      try {
+        const snapshot = await getDocs(collection(db, 'products'));
+        const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        setProducts(data);
+        setLoading(false);
+      } catch (error) {
+        console.error('Error fetching products:', error);
+        setLoading(false);
+      }
+    };
+
+    fetchProducts();
+  }, []);
+
+  const trendingProducts = products.filter(p => p.isTrending);
+  const sortedByTimestamp = [...products].sort(
+    (a, b) => b.timestamp?.toDate() - a.timestamp?.toDate()
+  );
+  const newArrivals = sortedByTimestamp.slice(0, 3);
+
+  // Auto-scroll every 3 seconds
+  useEffect(() => {
+    if (trendingProducts.length > 1) {
+      const interval = setInterval(() => {
+        const nextIndex = (slideIndex + 1) % trendingProducts.length;
+        trendingRef.current?.scrollToIndex({ index: nextIndex, animated: true });
+        setSlideIndex(nextIndex);
+      }, 3000);
+      return () => clearInterval(interval);
+    }
+  }, [slideIndex, trendingProducts.length]);
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -35,7 +78,6 @@ export default function HomeScreen() {
             <Image source={require('../../assets/notification.png')} style={styles.notificationIcon} />
           </TouchableOpacity>
         </Link>
-
         <Link href="/(cart)" asChild>
           <TouchableOpacity>
             <Image source={require('../../assets/cart.png')} style={styles.cartIcon} />
@@ -52,14 +94,34 @@ export default function HomeScreen() {
       <TextInput placeholder="Search Products" style={styles.searchInput} />
 
       <ScrollView showsVerticalScrollIndicator={false}>
-        {/* Trending */}
+        {/* Trending Slideshow */}
         <View style={styles.section}>
-          <Image
-            source={require('../../assets/p1.jpg')}
-            style={styles.trendingImage}
-            resizeMode="cover"
-          />
           <Text style={styles.sectionLabel}>TRENDING</Text>
+
+          {loading ? (
+            <ActivityIndicator size="large" color="#000" />
+          ) : trendingProducts.length > 0 ? (
+            <FlatList
+              ref={trendingRef}
+              data={trendingProducts}
+              keyExtractor={item => item.id}
+              horizontal
+              pagingEnabled
+              showsHorizontalScrollIndicator={false}
+              onMomentumScrollEnd={e => {
+                const index = Math.round(e.nativeEvent.contentOffset.x / SCREEN_WIDTH);
+                setSlideIndex(index);
+              }}
+              renderItem={({ item }) => (
+                <View style={styles.trendingItem}>
+                  <Image source={{ uri: item.imageUrl }} style={styles.trendingImage} />
+                  <Text style={styles.trendingName}>{item.name}</Text>
+                </View>
+              )}
+            />
+          ) : (
+            <Text>No trending products available.</Text>
+          )}
         </View>
 
         {/* Divider */}
@@ -72,16 +134,20 @@ export default function HomeScreen() {
         </View>
 
         <View style={styles.newArrivalsRow}>
-          {[1, 2, 3].map((_, index) => (
-            <View style={styles.newArrivalItemWrapper} key={index}>
-              <Image source={require('../../assets/p1.jpg')} style={styles.newArrivalItem} />
-              <View style={styles.textLeft}>
-                <Text style={styles.dressName}>Elegant Knit Set</Text>
-                <Text style={styles.dressPrice}>Rp 350.000</Text>
-                <Text style={styles.dressSizes}>Sizes: S / M / L</Text>
+          {loading ? (
+            <ActivityIndicator size="small" color="#000" />
+          ) : (
+            newArrivals.map(product => (
+              <View style={styles.newArrivalItemWrapper} key={product.id}>
+                <Image source={{ uri: product.imageUrl }} style={styles.newArrivalItem} />
+                <View style={styles.textLeft}>
+                  <Text style={styles.dressName}>{product.name}</Text>
+                  <Text style={styles.dressPrice}>Rp {product.price.toLocaleString()}</Text>
+                  <Text style={styles.dressSizes}>Sizes: {product.sizes.join(' / ')}</Text>
+                </View>
               </View>
-            </View>
-          ))}
+            ))
+          )}
         </View>
 
         {/* Divider */}
@@ -93,7 +159,6 @@ export default function HomeScreen() {
           <Text style={styles.upcomingDesc}>
             The Desert Rose Collection — Unveiling timeless elegance, inspired by Middle Eastern grace.
           </Text>
-
           <View style={styles.countdownRow}>
             {['Days', 'Hours', 'Mins', 'Sec'].map((label, i) => (
               <View style={styles.timerBlock} key={label}>
@@ -107,7 +172,7 @@ export default function HomeScreen() {
         </View>
       </ScrollView>
 
-      {/* Bottom tab bar */}
+      {/* Bottom nav */}
       <View style={styles.tabBar}>
         <NavIcon href="/(home)" icon={homeIcon} label="Home" />
         <NavIcon href="/(shop)" icon={shopIcon} label="Shop" />
@@ -151,19 +216,27 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   section: {
-    marginHorizontal: 20,
     marginBottom: 30,
-  },
-  trendingImage: {
-    width: '100%',
-    height: 200,
-    borderRadius: 10,
-    marginBottom: 4,
   },
   sectionLabel: {
     fontSize: 22,
     fontWeight: 'bold',
-    marginBottom: 4,
+    marginLeft: 20,
+    marginBottom: 8,
+  },
+  trendingItem: {
+    width: SCREEN_WIDTH,
+    alignItems: 'center',
+  },
+  trendingImage: {
+    width: SCREEN_WIDTH * 0.9,
+    height: 200,
+    borderRadius: 10,
+  },
+  trendingName: {
+    marginTop: 6,
+    fontSize: 14,
+    fontWeight: '500',
   },
   dividerText: {
     fontSize: 13,
@@ -189,10 +262,14 @@ const styles = StyleSheet.create({
   newArrivalsRow: {
     flexDirection: 'row',
     justifyContent: 'space-around',
+    flexWrap: 'wrap',
     marginHorizontal: 10,
     marginBottom: 30,
   },
-  newArrivalItemWrapper: { width: 100 },
+  newArrivalItemWrapper: {
+    width: 100,
+    marginBottom: 20,
+  },
   newArrivalItem: {
     width: 100,
     height: 120,
