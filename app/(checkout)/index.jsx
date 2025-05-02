@@ -1,9 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, SafeAreaView, TouchableOpacity, ScrollView, Image } from 'react-native';
-import { collection, getDocs } from 'firebase/firestore';
+import { doc, setDoc, getDocs, collection, deleteDoc } from 'firebase/firestore';
 import { db, auth } from '../../firebase';
 import * as Location from 'expo-location';
 import MapView, { Marker } from 'react-native-maps';
+import { useRouter } from 'expo-router';
 
 // built-in store locations for Maroe
 const storeCoords = {
@@ -12,6 +13,7 @@ const storeCoords = {
 };
 
 export default function SelectLocationPage() {
+  const router = useRouter();
   const [availableStores, setAvailableStores] = useState([]);
   const [selectedLocation, setSelectedLocation] = useState('');
   const [userCoords, setUserCoords] = useState(null);
@@ -152,7 +154,36 @@ export default function SelectLocationPage() {
           )}
         </View>
 
-        <TouchableOpacity style={styles.continueButton}>
+        <TouchableOpacity
+          style={styles.continueButton}
+          onPress={async () => {
+            try {
+              const userId = auth.currentUser?.uid;
+              const cartSnap = await getDocs(collection(db, 'carts', userId, 'items'));
+              const cartItems = cartSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+
+              const order = {
+                userId,
+                store: selectedLocation,
+                status: 'Approved',
+                createdAt: new Date().toISOString(),
+                items: cartItems,
+                total: cartItems.reduce((acc, item) => acc + item.price * item.quantity, 0),
+              };
+
+              await setDoc(doc(db, 'orders', userId, 'reservations', 'latest'), order);
+
+              // Clear cart (optional)
+              for (let item of cartSnap.docs) {
+                await deleteDoc(doc(db, 'carts', userId, 'items', item.id));
+              }
+
+              router.push('/(order)');
+            } catch (err) {
+              console.error('Error confirming order:', err);
+            }
+          }}
+        >
           <Text style={styles.continueText}>Confirm Pickup</Text>
         </TouchableOpacity>
       </ScrollView>
