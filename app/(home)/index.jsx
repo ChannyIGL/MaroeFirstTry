@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useRef } from 'react';
-import {View, Text, StyleSheet, Image,TextInput, TouchableOpacity, ScrollView, FlatList, Dimensions, SafeAreaView, ActivityIndicator} from 'react-native';
+import { View, Text, StyleSheet, Image, TextInput, TouchableOpacity, ScrollView, FlatList, Dimensions, SafeAreaView, ActivityIndicator } from 'react-native';
 import { Link } from 'expo-router';
-import { collection, getDocs, query, orderBy, limit } from 'firebase/firestore';
+import { collection, getDocs } from 'firebase/firestore';
 import { db } from '../../firebase';
 import homeIcon from '../../assets/home.png';
 import shopIcon from '../../assets/shop.png';
@@ -19,6 +19,7 @@ export default function HomeScreen() {
   const [timeLeft, setTimeLeft] = useState({ days: 0, hours: 0, minutes: 0, seconds: 0 });
   const launchDate = new Date('2025-05-22T00:00:00');
 
+  // Fetch product list from Firestore
   useEffect(() => {
     const fetchProducts = async () => {
       try {
@@ -31,17 +32,17 @@ export default function HomeScreen() {
         setLoading(false);
       }
     };
-
     fetchProducts();
   }, []);
 
+  // Filter and sort products
   const trendingProducts = products.filter(p => p.isTrending);
   const sortedByTimestamp = [...products].sort(
     (a, b) => b.timestamp?.toDate() - a.timestamp?.toDate()
   );
   const newArrivals = sortedByTimestamp.slice(0, 3);
 
-  // Auto-scroll every 3 seconds
+  // Autoscroll trending section every 3 seconds
   useEffect(() => {
     if (trendingProducts.length > 1) {
       const interval = setInterval(() => {
@@ -53,25 +54,23 @@ export default function HomeScreen() {
     }
   }, [slideIndex, trendingProducts.length]);
 
+  // Live countdown for new arrivals
   useEffect(() => {
     const interval = setInterval(() => {
       const now = new Date();
       const diff = launchDate - now;
-
       const days = Math.floor(diff / (1000 * 60 * 60 * 24));
       const hours = Math.floor((diff / (1000 * 60 * 60)) % 24);
       const minutes = Math.floor((diff / 1000 / 60) % 60);
       const seconds = Math.floor((diff / 1000) % 60);
-
       setTimeLeft({ days, hours, minutes, seconds });
     }, 1000);
-
     return () => clearInterval(interval);
   }, []);
 
   return (
     <SafeAreaView style={styles.container}>
-      {/* Top icons */}
+      {/* Top icons row */}
       <View style={styles.topIconsRow}>
         <Link href="/(notification)" asChild>
           <TouchableOpacity>
@@ -85,16 +84,16 @@ export default function HomeScreen() {
         </Link>
       </View>
 
-      {/* MAROE logo */}
+      {/* App logo */}
       <View style={styles.logoContainer}>
         <Image source={require('../../assets/fullLogo.png')} style={styles.fullLogo} resizeMode="contain" />
       </View>
 
-      {/* Search bar */}
+      {/* Search bar (non-functional for now) */}
       <TextInput placeholder="Search Products" style={styles.searchInput} />
 
       <ScrollView showsVerticalScrollIndicator={false}>
-        {/* Trending Slideshow */}
+        {/* Trending slideshow */}
         <View style={styles.section}>
           <Text style={styles.sectionLabel}>TRENDING</Text>
 
@@ -134,10 +133,10 @@ export default function HomeScreen() {
           )}
         </View>
 
-        {/* Divider */}
+        {/* Divider under trending */}
         <Text style={styles.dividerText}>Just In — Our Freshest Picks</Text>
 
-        {/* New Arrivals */}
+        {/* New arrivals section */}
         <View style={styles.newArrivalsHeader}>
           <Text style={styles.newArrivalsLabel}>NEW ARRIVALS</Text>
           <Text style={styles.viewAll}>View All</Text>
@@ -164,10 +163,10 @@ export default function HomeScreen() {
           )}
         </View>
 
-        {/* Divider */}
+        {/* Divider under new arrivals */}
         <Text style={styles.dividerText}>The Season Ahead, Curated for You</Text>
 
-        {/* Upcoming Arrivals */}
+        {/* Upcoming collection with countdown */}
         <View style={styles.upcomingContainer}>
           <Text style={styles.upcomingTitle}>Upcoming Arrivals</Text>
           <Text style={styles.upcomingDesc}>
@@ -186,7 +185,7 @@ export default function HomeScreen() {
         </View>
       </ScrollView>
 
-      {/* Bottom nav */}
+      {/* Bottom nav bar */}
       <View style={styles.tabBar}>
         <NavIcon href="/(home)" icon={homeIcon} label="Home" />
         <NavIcon href="/shop" icon={shopIcon} label="Shop" />
@@ -197,6 +196,7 @@ export default function HomeScreen() {
   );
 }
 
+// Bottom navigation icon component
 function NavIcon({ href, icon, label }) {
   return (
     <Link href={href} asChild>

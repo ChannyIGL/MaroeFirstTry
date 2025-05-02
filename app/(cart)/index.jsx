@@ -14,7 +14,7 @@ export default function CartPage() {
   const [cartItems, setCartItems] = useState([]);
   const [total, setTotal] = useState(0);
 
-  // Fetch cart items from Firestore
+  // Fetch all cart items from Firestore
   const fetchCart = async () => {
     try {
       const userId = auth.currentUser?.uid;
@@ -28,24 +28,25 @@ export default function CartPage() {
     }
   };
 
-  // Calculate total whenever cart changes
+  // Calculate total when cart changes
   useEffect(() => {
     const sum = cartItems.reduce((acc, item) => acc + (item.price * item.quantity), 0);
     setTotal(sum);
   }, [cartItems]);
 
+  // Initial fetch on mount
   useEffect(() => {
     fetchCart();
   }, []);
 
-  // Increase item quantity
+  // Increase quantity of a product
   const increaseQty = async (item) => {
     const ref = doc(db, 'carts', auth.currentUser.uid, 'items', item.id);
     await updateDoc(ref, { quantity: item.quantity + 1 });
     fetchCart();
   };
 
-  // Decrease item quantity or remove
+  // Decrease quantity of a product
   const decreaseQty = async (item) => {
     if (item.quantity <= 1) return;
     const ref = doc(db, 'carts', auth.currentUser.uid, 'items', item.id);
@@ -53,7 +54,7 @@ export default function CartPage() {
     fetchCart();
   };
 
-  // Remove item from cart
+  // Remove a product from the cart
   const removeItem = async (itemId) => {
     try {
       const ref = doc(db, 'carts', auth.currentUser.uid, 'items', itemId);
@@ -65,7 +66,7 @@ export default function CartPage() {
     }
   };
 
-  // Render each cart product
+  // Render each product in cart
   const renderItem = ({ item }) => (
     <View style={styles.card}>
       <Image source={{ uri: item.imageUrl }} style={styles.cardImage} />
@@ -93,13 +94,13 @@ export default function CartPage() {
 
   return (
     <SafeAreaView style={styles.container}>
-      {/* Header */}
+      {/* Header section */}
       <View style={styles.header}>
         <Text style={styles.pageTitle}>MY CART</Text>
         <Text style={styles.itemCount}>{cartItems.length} item{cartItems.length !== 1 ? 's' : ''}</Text>
       </View>
 
-      {/* Cart List */}
+      {/* Cart product list */}
       <FlatList
         data={cartItems}
         keyExtractor={item => item.id}
@@ -108,7 +109,7 @@ export default function CartPage() {
         style={{ paddingHorizontal: 20 }}
       />
 
-      {/* Footer Total */}
+      {/* Total and checkout section */}
       <View style={styles.totalFooter}>
         <Text style={styles.totalLabel}>Estimated Total</Text>
         <Text style={styles.totalValue}>Rp {total.toLocaleString()}</Text>
@@ -119,7 +120,7 @@ export default function CartPage() {
         </Link>
       </View>
 
-      {/* Bottom nav */}
+      {/* Bottom nav bar */}
       <View style={styles.tabBar}>
         <NavIcon href="/(home)" icon={homeIcon} label="Home" />
         <NavIcon href="/shop" icon={shopIcon} label="Shop" />

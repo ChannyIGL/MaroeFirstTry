@@ -15,7 +15,7 @@ export default function WishlistPage() {
   const [loading, setLoading] = useState(true);
   const [feedback, setFeedback] = useState('');
 
-  // Fetch user wishlist
+  // Fetch wishlist items for the current user
   const fetchWishlist = async () => {
     try {
       const userId = auth.currentUser?.uid;
@@ -31,7 +31,7 @@ export default function WishlistPage() {
     }
   };
 
-  // Remove item from wishlist with fade animation
+  // Remove item with animation and Firestore delete
   const removeItem = async (itemId) => {
     const userId = auth.currentUser?.uid;
     if (!userId) return;
@@ -61,7 +61,7 @@ export default function WishlistPage() {
     fetchWishlist();
   }, []);
 
-  // Render each wishlist product
+  // Render each wishlist product card
   const renderItem = ({ item }) => (
     <View>
       <Link href={`/shop/${item.id}`} asChild>
@@ -74,6 +74,7 @@ export default function WishlistPage() {
           </Animated.View>
         </TouchableOpacity>
       </Link>
+
       <TouchableOpacity style={styles.removeButton} onPress={() => removeItem(item.id)}>
         <Text style={styles.removeButtonText}>Remove</Text>
       </TouchableOpacity>
@@ -82,7 +83,7 @@ export default function WishlistPage() {
 
   return (
     <SafeAreaView style={styles.container}>
-      {/* Top icons */}
+      {/* Top icons row */}
       <View style={styles.topIconsRow}>
         <Link href="/(notification)" asChild>
           <TouchableOpacity>
@@ -96,12 +97,12 @@ export default function WishlistPage() {
         </Link>
       </View>
 
-      {/* Logo */}
+      {/* App logo */}
       <View style={styles.logoContainer}>
         <Image source={require('../../assets/fullLogo.png')} style={styles.fullLogo} resizeMode="contain" />
       </View>
 
-      {/* Search + Sort */}
+      {/* Search + sort row (static) */}
       <View style={styles.searchRow}>
         <TextInput placeholder="Search Products" style={styles.searchInput} />
         <TouchableOpacity style={styles.sortButton}>
@@ -109,11 +110,13 @@ export default function WishlistPage() {
         </TouchableOpacity>
       </View>
 
-      {/* Title + Feedback */}
+      {/* Page title */}
       <Text style={styles.pageTitle}>WISHLIST</Text>
+
+      {/* Feedback message */}
       {feedback ? <Text style={styles.feedback}>{feedback}</Text> : null}
 
-      {/* Main Content */}
+      {/* Wishlist content */}
       {loading ? (
         <ActivityIndicator size="large" color="#000" style={{ marginTop: 40 }} />
       ) : wishlistItems.length === 0 ? (
@@ -129,7 +132,7 @@ export default function WishlistPage() {
         />
       )}
 
-      {/* Bottom nav */}
+      {/* Bottom nav bar */}
       <View style={styles.tabBar}>
         <NavIcon href="/(home)" icon={homeIcon} label="Home" />
         <NavIcon href="/shop" icon={shopIcon} label="Shop" />
@@ -140,7 +143,7 @@ export default function WishlistPage() {
   );
 }
 
-// Reusable bottom nav icon
+// Bottom navigation icon component
 function NavIcon({ href, icon, label }) {
   return (
     <Link href={href} asChild>
@@ -152,7 +155,6 @@ function NavIcon({ href, icon, label }) {
   );
 }
 
-// Styles
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#fff' },
   topIconsRow: {

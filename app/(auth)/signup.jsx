@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { StyleSheet, Text, View, TextInput, TouchableOpacity, Image } from 'react-native';
 import { Link } from 'expo-router';
-import { createUserWithEmailAndPassword } from 'firebase/auth';
+import { createUserWithEmailAndPassword, updateProfile } from 'firebase/auth';
 import { auth } from '../../firebase';
 
 const SignupScreen = () => {
@@ -23,7 +23,13 @@ const SignupScreen = () => {
     }
 
     try {
-      await createUserWithEmailAndPassword(auth, email, password);
+      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+
+      // Set the user's display name in Firebase Auth
+      await updateProfile(userCredential.user, {
+        displayName: name,
+      });
+
       setSuccess(true);
     } catch (err) {
       setError(err.message);
@@ -32,7 +38,7 @@ const SignupScreen = () => {
 
   return (
     <View style={styles.container}>
-      {/* Logo and brand */}
+      {/* Top logo and app name */}
       <View style={styles.brandContainer}>
         <Image
           source={require('../../assets/logo.png')}
@@ -44,7 +50,7 @@ const SignupScreen = () => {
 
       <Text style={styles.subtitle}>Create your account</Text>
 
-      {/* Success message */}
+      {/* Success message with redirect button */}
       {success && (
         <>
           <Text style={styles.successText}>Account created! Please log in below.</Text>
@@ -56,13 +62,13 @@ const SignupScreen = () => {
         </>
       )}
 
-      {/* Error message */}
+      {/* Error message if signup fails */}
       {error ? <Text style={styles.errorText}>{error}</Text> : null}
 
-      {/* Only show form if not successful */}
+      {/* Signup form */}
       {!success && (
         <>
-          {/* Name input */}
+          {/* Name input field */}
           <TextInput
             placeholder="Full Name"
             value={name}
@@ -70,7 +76,7 @@ const SignupScreen = () => {
             style={styles.input}
           />
 
-          {/* Email input */}
+          {/* Email input field */}
           <TextInput
             placeholder="E-mail"
             value={email}
@@ -80,7 +86,7 @@ const SignupScreen = () => {
             autoCapitalize="none"
           />
 
-          {/* Password input */}
+          {/* Password input field */}
           <TextInput
             placeholder="Password"
             value={password}
@@ -89,7 +95,7 @@ const SignupScreen = () => {
             secureTextEntry
           />
 
-          {/* Confirm password input */}
+          {/* Confirm password input field */}
           <TextInput
             placeholder="Confirm Password"
             value={confirmPassword}
@@ -105,7 +111,7 @@ const SignupScreen = () => {
         </>
       )}
 
-      {/* Login link (hidden after success) */}
+      {/* Login link for existing users */}
       {!success && (
         <Text style={styles.loginText}>
           Already have an account?{' '}

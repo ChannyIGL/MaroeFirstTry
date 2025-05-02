@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, StyleSheet, Image, TouchableOpacity, SafeAreaView, Alert, Platform } from 'react-native';
+import { View, Text, StyleSheet, Image, TouchableOpacity, SafeAreaView, Alert } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Link, useRouter } from 'expo-router';
 import { auth } from '../../firebase';
@@ -13,8 +13,10 @@ export default function ProfilePage() {
   const user = auth.currentUser;
   const router = useRouter();
 
+  // Display full name or fallback to email prefix or guest
   const userName = user?.displayName || user?.email?.split('@')[0] || 'Guest';
 
+  // Handle user logout
   const handleLogout = async () => {
     try {
       await signOut(auth);
@@ -27,12 +29,12 @@ export default function ProfilePage() {
 
   return (
     <SafeAreaView style={styles.container}>
-      {/* Logo */}
+      {/* MAROE logo */}
       <View style={styles.logoContainer}>
         <Image source={require('../../assets/fullLogo.png')} style={styles.fullLogo} resizeMode="contain" />
       </View>
 
-      {/* Profile Info */}
+      {/* User profile info */}
       <View style={styles.profileBox}>
         <Text style={styles.label}>Name</Text>
         <Text style={styles.value}>{userName}</Text>
@@ -45,10 +47,10 @@ export default function ProfilePage() {
         </TouchableOpacity>
       </View>
 
-      {/* Divider */}
+      {/* Section divider */}
       <View style={styles.divider} />
 
-      {/* Quote + Branding Footer */}
+      {/* Brand quote and footer */}
       <LinearGradient
         colors={['#f5f5f5', '#ffffff']}
         style={styles.quoteWrapper}
@@ -59,7 +61,7 @@ export default function ProfilePage() {
         <Text style={styles.version}>✨ Powered by MAROE</Text>
       </LinearGradient>
 
-      {/* Bottom Navigation */}
+      {/* Bottom nav bar */}
       <View style={styles.tabBar}>
         <NavIcon href="/(home)" icon={homeIcon} label="Home" />
         <NavIcon href="/shop" icon={shopIcon} label="Shop" />
@@ -70,6 +72,7 @@ export default function ProfilePage() {
   );
 }
 
+// Bottom navigation icon component
 function NavIcon({ href, icon, label }) {
   return (
     <Link href={href} asChild>

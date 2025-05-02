@@ -1,19 +1,18 @@
 import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, SafeAreaView, TouchableOpacity, ScrollView, Image } from 'react-native';
-import { doc, setDoc, getDocs, collection, deleteDoc } from 'firebase/firestore';
+import { doc, getDocs, collection, deleteDoc, addDoc } from 'firebase/firestore';
 import { db, auth } from '../../firebase';
 import * as Location from 'expo-location';
 import MapView, { Marker } from 'react-native-maps';
 import { useRouter } from 'expo-router';
 
-// built-in store locations for Maroe
+// Store location coordinates for map markers
 const storeCoords = {
   Jakarta: { latitude: -6.2088, longitude: 106.8456 },
   Surabaya: { latitude: -7.2575, longitude: 112.7521 },
 };
 
 export default function SelectLocationPage() {
-  const router = useRouter();
   const [availableStores, setAvailableStores] = useState([]);
   const [selectedLocation, setSelectedLocation] = useState('');
   const [userCoords, setUserCoords] = useState(null);
@@ -22,7 +21,9 @@ export default function SelectLocationPage() {
   const [totalCost, setTotalCost] = useState(0);
 
   const allStores = ['Jakarta', 'Surabaya'];
+  const router = useRouter();
 
+  // Fetch cart and calculate available store locations
   useEffect(() => {
     const fetchCartData = async () => {
       try {
@@ -32,7 +33,6 @@ export default function SelectLocationPage() {
         const cartSnap = await getDocs(collection(db, 'carts', userId, 'items'));
         const items = cartSnap.docs.map(doc => doc.data());
 
-        // Store available locations
         const locationSets = items
           .filter(item => Array.isArray(item.locations))
           .map(item => new Set(item.locations));
@@ -44,7 +44,6 @@ export default function SelectLocationPage() {
           setAvailableStores(Array.from(intersection));
         }
 
-        // Calculate total
         const enriched = items.map(item => ({
           ...item,
           total: item.price * item.quantity,
@@ -59,6 +58,7 @@ export default function SelectLocationPage() {
     fetchCartData();
   }, []);
 
+  // Get user's live location for map
   useEffect(() => {
     const getLocation = async () => {
       try {
@@ -85,7 +85,7 @@ export default function SelectLocationPage() {
         {/* MAROE logo */}
         <Image source={require('../../assets/fullLogo.png')} style={styles.logo} resizeMode="contain" />
 
-        {/* Store selector */}
+        {/* Store selector buttons */}
         <Text style={styles.title}>Choose Store Location</Text>
         {allStores.map((store) => {
           const isAvailable = availableStores.includes(store);
@@ -115,7 +115,7 @@ export default function SelectLocationPage() {
           );
         })}
 
-        {/* Cart Summary */}
+        {/* Cart product summary */}
         <Text style={styles.subtitle}>Cart Summary</Text>
         {cartItems.map((item, i) => (
           <View key={i} style={styles.itemRow}>
@@ -127,7 +127,7 @@ export default function SelectLocationPage() {
         ))}
         <Text style={styles.totalText}>Total: Rp {totalCost.toLocaleString()}</Text>
 
-        {/* Map overview */}
+        {/* Map explanation and view */}
         <Text style={styles.subtitle}>Map Overview</Text>
         <Text style={styles.description}>
           This map uses your current location (blue marker) and the selected store (red marker).
@@ -154,6 +154,7 @@ export default function SelectLocationPage() {
           )}
         </View>
 
+        {/* Confirm order and create reservation */}
         <TouchableOpacity
           style={styles.continueButton}
           onPress={async () => {
@@ -171,14 +172,16 @@ export default function SelectLocationPage() {
                 total: cartItems.reduce((acc, item) => acc + item.price * item.quantity, 0),
               };
 
-              await setDoc(doc(db, 'orders', userId, 'reservations', 'latest'), order);
+              // Save new order to Firestore
+              const newOrderRef = await addDoc(collection(db, 'orders', userId, 'reservations'), order);
 
-              // Clear cart (optional)
+              // Clear cart after checkout
               for (let item of cartSnap.docs) {
                 await deleteDoc(doc(db, 'carts', userId, 'items', item.id));
               }
 
-              router.push('/(order)');
+              // Navigate to order details
+              router.push(`/order/${newOrderRef.id}`);
             } catch (err) {
               console.error('Error confirming order:', err);
             }

@@ -23,7 +23,7 @@ const LoginScreen = () => {
 
   return (
     <View style={styles.container}>
-      {/* Logo and brand name */}
+      {/* Top logo and app name */}
       <View style={styles.brandContainer}>
         <Image
           source={require('../../assets/logo.png')}
@@ -35,10 +35,10 @@ const LoginScreen = () => {
 
       <Text style={styles.subtitle}>Sign in to your account</Text>
 
-      {/* Error message */}
+      {/* Display error if login fails */}
       {error ? <Text style={styles.errorText}>{error}</Text> : null}
 
-      {/* Email input */}
+      {/* Email input field */}
       <TextInput
         placeholder="E-mail"
         value={email}
@@ -48,7 +48,7 @@ const LoginScreen = () => {
         autoCapitalize="none"
       />
 
-      {/* Password input */}
+      {/* Password input field */}
       <TextInput
         placeholder="Password"
         value={password}
@@ -67,7 +67,7 @@ const LoginScreen = () => {
         <Text style={styles.loginButtonText}>Login</Text>
       </TouchableOpacity>
 
-      {/* Signup link */}
+      {/* Navigation to sign up page */}
       <Text style={styles.signupText}>
         Don’t have an account?{' '}
         <Link href="/(auth)/signup" style={styles.signupLink}>
