@@ -1,8 +1,8 @@
 import React, { useEffect, useState, useRef } from 'react';
-import { View, Text, StyleSheet, Image, TextInput, TouchableOpacity, ScrollView, FlatList, Dimensions, SafeAreaView, ActivityIndicator } from 'react-native';
+import {View, Text, StyleSheet, Image, TextInput, TouchableOpacity, ScrollView, FlatList,Dimensions, SafeAreaView, ActivityIndicator, Animated} from 'react-native';
 import { Link } from 'expo-router';
 import { collection, getDocs } from 'firebase/firestore';
-import { db } from '../../firebase';
+import { db, auth } from '../../firebase';
 import homeIcon from '../../assets/home.png';
 import shopIcon from '../../assets/shop.png';
 import wishlistIcon from '../../assets/wishlist.png';
@@ -15,9 +15,11 @@ export default function HomeScreen() {
   const [loading, setLoading] = useState(true);
   const [slideIndex, setSlideIndex] = useState(0);
   const trendingRef = useRef(null);
+  const bellAnim = useRef(new Animated.Value(0)).current;
+  const [hasOrders, setHasOrders] = useState(false);
 
   const [timeLeft, setTimeLeft] = useState({ days: 0, hours: 0, minutes: 0, seconds: 0 });
-  const launchDate = new Date('2025-05-22T00:00:00');
+  const launchDate = new Date('2025-06-22T00:00:00');
 
   // Fetch product list from Firestore
   useEffect(() => {
@@ -35,7 +37,46 @@ export default function HomeScreen() {
     fetchProducts();
   }, []);
 
-  // Filter and sort products
+  // Check if there are any orders to trigger bell animation
+  useEffect(() => {
+    const checkOrders = async () => {
+      const userId = auth.currentUser?.uid;
+      if (!userId) return;
+
+      const snapshot = await getDocs(collection(db, 'orders', userId, 'reservations'));
+      console.log('ORDER COUNT:', snapshot.size);
+      setHasOrders(snapshot.size > 0);
+    };
+    checkOrders();
+  }, []);
+
+  // Bounce the bell if there are any orders
+  useEffect(() => {
+    if (!hasOrders) return;
+
+    bellAnim.setValue(0);
+
+    const loop = Animated.loop(
+      Animated.sequence([
+        Animated.timing(bellAnim, {
+          toValue: -10,
+          duration: 300,
+          useNativeDriver: true,
+        }),
+        Animated.timing(bellAnim, {
+          toValue: 0,
+          duration: 300,
+          useNativeDriver: true,
+        }),
+      ])
+    );
+
+    loop.start();
+
+    return () => loop.stop();
+  }, [hasOrders]);
+
+  // Filter trending and sort for new arrivals
   const trendingProducts = products.filter(p => p.isTrending);
   const sortedByTimestamp = [...products].sort(
     (a, b) => b.timestamp?.toDate() - a.timestamp?.toDate()
@@ -54,7 +95,7 @@ export default function HomeScreen() {
     }
   }, [slideIndex, trendingProducts.length]);
 
-  // Live countdown for new arrivals
+  // Live countdown for upcoming collection
   useEffect(() => {
     const interval = setInterval(() => {
       const now = new Date();
@@ -74,7 +115,9 @@ export default function HomeScreen() {
       <View style={styles.topIconsRow}>
         <Link href="/(notification)" asChild>
           <TouchableOpacity>
-            <Image source={require('../../assets/notification.png')} style={styles.notificationIcon} />
+            <Animated.View style={{ transform: [{ translateY: bellAnim }] }}>
+              <Image source={require('../../assets/notification.png')} style={styles.notificationIcon} />
+            </Animated.View>
           </TouchableOpacity>
         </Link>
         <Link href="/(cart)" asChild>

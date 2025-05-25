@@ -13,8 +13,9 @@ const SCREEN_WIDTH = Dimensions.get('window').width;
 export default function CartPage() {
   const [cartItems, setCartItems] = useState([]);
   const [total, setTotal] = useState(0);
+  const [availableLocations, setAvailableLocations] = useState([]);
 
-  // Fetch all cart items from Firestore
+  // Fetch all cart items and determine common locations
   const fetchCart = async () => {
     try {
       const userId = auth.currentUser?.uid;
@@ -23,30 +24,33 @@ export default function CartPage() {
       const snapshot = await getDocs(collection(db, 'carts', userId, 'items'));
       const items = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
       setCartItems(items);
+
+      // Find common locations across all items
+      const allItemLocations = items.map(item => item.locations || []);
+      const commonLocations = allItemLocations.reduce((acc, locs) => {
+        return acc.filter(loc => locs.includes(loc));
+      }, allItemLocations[0] || []);
+      setAvailableLocations(commonLocations);
     } catch (err) {
       console.error('Error fetching cart:', err);
     }
   };
 
-  // Calculate total when cart changes
+  useEffect(() => {
+    fetchCart();
+  }, []);
+
   useEffect(() => {
     const sum = cartItems.reduce((acc, item) => acc + (item.price * item.quantity), 0);
     setTotal(sum);
   }, [cartItems]);
 
-  // Initial fetch on mount
-  useEffect(() => {
-    fetchCart();
-  }, []);
-
-  // Increase quantity of a product
   const increaseQty = async (item) => {
     const ref = doc(db, 'carts', auth.currentUser.uid, 'items', item.id);
     await updateDoc(ref, { quantity: item.quantity + 1 });
     fetchCart();
   };
 
-  // Decrease quantity of a product
   const decreaseQty = async (item) => {
     if (item.quantity <= 1) return;
     const ref = doc(db, 'carts', auth.currentUser.uid, 'items', item.id);
@@ -54,7 +58,6 @@ export default function CartPage() {
     fetchCart();
   };
 
-  // Remove a product from the cart
   const removeItem = async (itemId) => {
     try {
       const ref = doc(db, 'carts', auth.currentUser.uid, 'items', itemId);
@@ -66,7 +69,6 @@ export default function CartPage() {
     }
   };
 
-  // Render each product in cart
   const renderItem = ({ item }) => (
     <View style={styles.card}>
       <Image source={{ uri: item.imageUrl }} style={styles.cardImage} />
@@ -94,22 +96,32 @@ export default function CartPage() {
 
   return (
     <SafeAreaView style={styles.container}>
-      {/* Header section */}
+      {/* Header */}
       <View style={styles.header}>
         <Text style={styles.pageTitle}>MY CART</Text>
         <Text style={styles.itemCount}>{cartItems.length} item{cartItems.length !== 1 ? 's' : ''}</Text>
       </View>
 
-      {/* Cart product list */}
+      {/* Cart Items */}
       <FlatList
         data={cartItems}
         keyExtractor={item => item.id}
         renderItem={renderItem}
-        contentContainerStyle={{ paddingBottom: 120 }}
+        contentContainerStyle={{ paddingBottom: 280 }}
         style={{ paddingHorizontal: 20 }}
       />
 
-      {/* Total and checkout section */}
+      {/* Common Pickup Locations */}
+      {availableLocations.length > 0 && (
+        <View style={styles.locationBox}>
+          <Text style={styles.locationTitle}>📍 Available Pickup Locations</Text>
+          {availableLocations.map((loc, index) => (
+            <Text key={index} style={styles.locationItem}>• {loc}</Text>
+          ))}
+        </View>
+      )}
+
+      {/* Total & Checkout */}
       <View style={styles.totalFooter}>
         <Text style={styles.totalLabel}>Estimated Total</Text>
         <Text style={styles.totalValue}>Rp {total.toLocaleString()}</Text>
@@ -120,7 +132,7 @@ export default function CartPage() {
         </Link>
       </View>
 
-      {/* Bottom nav bar */}
+      {/* Bottom Nav */}
       <View style={styles.tabBar}>
         <NavIcon href="/(home)" icon={homeIcon} label="Home" />
         <NavIcon href="/shop" icon={shopIcon} label="Shop" />
@@ -201,6 +213,26 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: '#e44',
     textDecorationLine: 'underline',
+  },
+  locationBox: {
+    position: 'absolute',
+    bottom: 200,
+    left: 20,
+    right: 20,
+    backgroundColor: '#f9f9f9',
+    padding: 12,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: '#eee',
+  },
+  locationTitle: {
+    fontSize: 14,
+    fontWeight: '600',
+    marginBottom: 6,
+  },
+  locationItem: {
+    fontSize: 13,
+    color: '#444',
   },
   totalFooter: {
     position: 'absolute',
