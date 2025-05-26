@@ -209,7 +209,7 @@ const styles = StyleSheet.create({
     alignSelf: 'flex-end',
   },
   bubbleLeft: {
-    backgroundColor: '#eee',
+    backgroundColor: '#000',
     alignSelf: 'flex-start',
   },
   chatText: { color: '#fff' },
