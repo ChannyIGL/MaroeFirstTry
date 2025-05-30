@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<coverage generated="1748615359623" clover="3.2.0">
+  <project timestamp="1748615359623" name="All files">
+    <metrics statements="18" coveredstatements="18" conditionals="14" coveredconditionals="14" methods="10" coveredmethods="10" elements="42" coveredelements="42" complexity="0" loc="18" ncloc="18" packages="1" files="3" classes="3"/>
+    <file name="cartUtils.js" path="C:\Users\reaga\OneDrive\Desktop\Maroe\Phase 2 Submission\TestApp\utils\cartUtils.js">
+      <metrics statements="7" coveredstatements="7" conditionals="6" coveredconditionals="6" methods="3" coveredmethods="3"/>
+      <line num="2" count="2" type="stmt"/>
+      <line num="6" count="4" type="cond" truecount="2" falsecount="0"/>
+      <line num="7" count="1" type="stmt"/>
+      <line num="9" count="3" type="cond" truecount="2" falsecount="0"/>
+      <line num="10" count="2" type="cond" truecount="2" falsecount="0"/>
+      <line num="12" count="1" type="stmt"/>
+      <line num="15" count="1" type="stmt"/>
+    </file>
+    <file name="locationUtils.js" path="C:\Users\reaga\OneDrive\Desktop\Maroe\Phase 2 Submission\TestApp\utils\locationUtils.js">
+      <metrics statements="5" coveredstatements="5" conditionals="4" coveredconditionals="4" methods="4" coveredmethods="4"/>
+      <line num="2" count="5" type="cond" truecount="2" falsecount="0"/>
+      <line num="3" count="4" type="stmt"/>
+      <line num="4" count="7" type="cond" truecount="2" falsecount="0"/>
+      <line num="5" count="3" type="stmt"/>
+      <line num="8" count="1" type="stmt"/>
+    </file>
+    <file name="wishlistUtils.js" path="C:\Users\reaga\OneDrive\Desktop\Maroe\Phase 2 Submission\TestApp\utils\wishlistUtils.js">
+      <metrics statements="6" coveredstatements="6" conditionals="4" coveredconditionals="4" methods="3" coveredmethods="3"/>
+      <line num="2" count="4" type="stmt"/>
+      <line num="3" count="3" type="cond" truecount="2" falsecount="0"/>
+      <line num="5" count="2" type="stmt"/>
+      <line num="6" count="4" type="cond" truecount="2" falsecount="0"/>
+      <line num="10" count="1" type="stmt"/>
+      <line num="14" count="1" type="stmt"/>
+    </file>
+  </project>
+</coverage>
